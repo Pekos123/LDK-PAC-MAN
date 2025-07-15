@@ -56,6 +56,12 @@ class Ghost : public Entity
         ldk::Vec3 TargetPosition;
 };
 
+class Pacman : public Entity
+{
+    public:
+        void Die();
+};
+
 struct Waypoint
 {
 	ldk::Vec3 position;
@@ -105,7 +111,7 @@ struct GameState
 	ldk::Sprite dotSprite;
 
 	int playerPoints = 0;
-	Entity pacman = Entity();
+	Pacman pacman = Pacman();
 
     Ghost blinky = Ghost();
     Ghost pinky = Ghost();
