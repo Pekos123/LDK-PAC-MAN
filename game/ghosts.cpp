@@ -14,10 +14,17 @@ void MoveGhosts(const float deltaTime)
 
 GhostStrategy GetGhostStrategy(EGhostType type)
 {
-    if (type == Clyde) return ClydeMovementStrategy;
-    if (type == Inky) return InkyMovementStrategy;
-    if (type == Pinky) return PinkyMovementStrategy;
-    return BlinkyMovementStrategy;
+    switch(type)
+    {
+        case Clyde:
+            return ClydeMovementStrategy;
+        case Inky:
+            return InkyMovementStrategy;
+        case Pinky:
+            return PinkyMovementStrategy;
+        case Blinky:
+            return BlinkyMovementStrategy;
+    }   
 };
 
 ldk::Vec4 getGhostColor(Ghost& ghost)
@@ -25,15 +32,16 @@ ldk::Vec4 getGhostColor(Ghost& ghost)
     switch(ghost.Type)
     {
         case Blinky:
-            return { 1.0f, 0.0f, 0.0f, 1.0f };
+            return Color4::Red;
         case Pinky:
-            return { 1.0f, 0.71f, 0.75f, 1.0f };
+            return Color4::Pink;
         case Inky:
-            return { 0.0f, 1.0f, 1.0f, 1.0f };
+            return Color4::Cyan;
         case Clyde:
-            return { 1.0f, 0.41f, 0.0f, 1.0f };
+            return Color4::Orange;
+        default:
+            return Color4::White;
     }
-    return { 1.0f, 1.0f, 1.0f, 1.0f };
 };
 
 void setGhostTargetPosition(Ghost& ghost)

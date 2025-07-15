@@ -31,6 +31,8 @@ const ldk::Vec3 RIGHT_DIR = { 1,  0,  0};
 const ldk::Vec3 DOWN_DIR  = { 0, -1,  0};
 const ldk::Vec3 UP_DIR    = { 0,  1,  0};
 
+#include "game.h"
+
 class Entity
 {
     public:
@@ -41,6 +43,8 @@ class Entity
         float speed;
         ldk::Vec3 desiredDir;
         int curWaypointIndex;
+
+        Entity();
 };
 
 enum EGhostType { Blinky, Inky, Pinky, Clyde };
@@ -99,12 +103,16 @@ struct GameState
 	ldk::Material spritesheet;
 	ldk::Sprite background;
 	ldk::Sprite dotSprite;
+
 	int playerPoints = 0;
 	Entity pacman = Entity();
+
     Ghost blinky = Ghost();
     Ghost pinky = Ghost();
     Ghost inky = Ghost();
     Ghost clyde = Ghost();
+    Ghost ghosts[4] = {blinky, pinky, inky, clyde};
+
     InputController* playerController;
     
     ~GameState()
@@ -133,15 +141,10 @@ void MovePacman(const float, Entity&);
 
 void initializePacman()
 {
-	gameState -> pacman.sprite.color = { 1.0, 1.0, 1.0, 1.0 };
-	gameState -> pacman.sprite.width = 14;
-	gameState -> pacman.sprite.height = 14;
 	gameState -> pacman.sprite.srcRect = { 473, 1, 13, 13 };
-	gameState -> pacman.sprite.angle = 0;
 	gameState -> pacman.sprite.position = { 114, 0, PACMAN_LAYER };
 	gameState -> pacman.sprite.position.y = allWaypoints[WAYPOINTS_LENGTH-1].position.y;
 	gameState -> pacman.previousPosition = gameState -> pacman.sprite.position;
-	gameState -> pacman.speed = 60;
 	gameState -> pacman.direction = { 0,0,0 };
 	gameState -> pacman.previousDirection = { 1,0,0 };
     
@@ -154,57 +157,37 @@ void initializeGhosts()
     //Blinky (red)
     int waypointIndex = (WAYPOINTS_LENGTH-1)/2;
     gameState -> blinky.Type = Blinky;
-    gameState -> blinky.sprite.color = {1.0, 1.0, 1.0, 1.0};
-    gameState -> blinky.sprite.width = 14;
-    gameState -> blinky.sprite.height = 14;
     gameState -> blinky.sprite.srcRect = {521, 65, 13, 13};
-    gameState -> blinky.sprite.angle = 0;
     gameState -> blinky.sprite.position = 
         { allWaypoints[waypointIndex].position.x, allWaypoints[waypointIndex].position.y - 1, GHOSTS_LAYER };
     gameState -> blinky.previousPosition = allWaypoints[waypointIndex].position;
-    gameState -> blinky.speed = 60;
     gameState -> blinky.direction = {0, -1, 0};
     
     //Pinky (pink)
     waypointIndex = 0;
-    gameState -> pinky.sprite.color = {1.0, 1.0, 1.0, 1.0};
     gameState -> pinky.Type = Pinky;
-    gameState -> pinky.sprite.width = 14;
-    gameState -> pinky.sprite.height = 14;
     gameState -> pinky.sprite.srcRect = {521, 81, 13, 13};
-    gameState -> pinky.sprite.angle = 0;
     gameState -> pinky.sprite.position = 
         { allWaypoints[waypointIndex].position.x, allWaypoints[waypointIndex].position.y - 1, GHOSTS_LAYER };
     gameState -> pinky.previousPosition = allWaypoints[waypointIndex].position;
-    gameState -> pinky.speed = 60;
     gameState -> pinky.direction = {0, -1, 0};
     
     //Inky (blue)
     waypointIndex = (WAYPOINTS_LENGTH - 1) / 2 + 6;
-    gameState -> inky.sprite.color = {1.0, 1.0, 1.0, 1.0};
     gameState -> inky.Type = Inky;
-    gameState -> inky.sprite.width = 14;
-    gameState -> inky.sprite.height = 14;
     gameState -> inky.sprite.srcRect = {521, 97, 13, 13};
-    gameState -> inky.sprite.angle = 0;
     gameState -> inky.sprite.position = 
         { allWaypoints[waypointIndex].position.x, allWaypoints[waypointIndex].position.y + 1, GHOSTS_LAYER };
     gameState -> inky.previousPosition = allWaypoints[waypointIndex].position;
-    gameState -> inky.speed = 60;
     gameState -> inky.direction = {0, 1, 0};
     
     //Clyde (orange)
     waypointIndex = 6;
-    gameState -> clyde.sprite.color = {1.0, 1.0, 1.0, 1.0};
     gameState -> clyde.Type = Clyde;
-    gameState -> clyde.sprite.width = 14;
-    gameState -> clyde.sprite.height = 14;
     gameState -> clyde.sprite.srcRect = {521, 113, 13, 13};
-    gameState -> clyde.sprite.angle = 0;
     gameState -> clyde.sprite.position = 
         { allWaypoints[waypointIndex].position.x, allWaypoints[waypointIndex].position.y + 1, GHOSTS_LAYER };
     gameState -> clyde.previousPosition = allWaypoints[waypointIndex].position;
-    gameState -> clyde.speed = 60;
     gameState -> clyde.direction = {0, 1, 0};
 };
 
@@ -213,14 +196,14 @@ void initializeSpritesheet()
     //Background
     gameState -> spritesheet = ldk::render::loadMaterial("./assets/spritesheet.cfg");
     gameState -> background.position = { SCREEN_WIDTH*0.5, SCREEN_HEIGHT*0.5, BACKGROUND_LAYER };
-    gameState -> background.color = { 1.0, 1.0, 1.0, 1.0 };
+    gameState -> background.color = Color4::White;
     gameState -> background.width = SCREEN_WIDTH;
     gameState -> background.height = SCREEN_HEIGHT;
     gameState -> background.srcRect = { SCREEN_WIDTH + 2, 0, SCREEN_WIDTH - 2, SCREEN_HEIGHT };
     gameState -> background.angle = 0;
 
     //Waypoint
-    gameState -> dotSprite.color = { 1.0, 1.0, 1.0, 1.0 };
+    gameState -> dotSprite.color = Color4::White;
     gameState -> dotSprite.width = 2;
     gameState -> dotSprite.height = 2;
     gameState -> dotSprite.srcRect = { 500,20,1,1 };
