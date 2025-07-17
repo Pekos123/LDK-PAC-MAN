@@ -20,6 +20,8 @@ int InvertHorizontalDirection(const int directions)
 
 void initializeWaypoints()
 {
+    // 24x
+
 	// WAYPOINTS
 	// C1 - X 13
 	allWaypoints[0] = Waypoint({ 13, SCREEN_HEIGHT - 12, 0 });

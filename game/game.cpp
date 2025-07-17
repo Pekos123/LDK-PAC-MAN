@@ -137,6 +137,7 @@ Dot allDots[DOTS_LENGTH];
 typedef void (*GhostStrategy)(Ghost&, Waypoint&);
 
 #include "waypoint.cpp"
+#include "map.cpp"
 #include "dot.cpp"
 #include "ghosts.cpp"
 #include "input.cpp"
