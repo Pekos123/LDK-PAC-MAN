@@ -56,6 +56,12 @@ class Ghost : public Entity
         ldk::Vec3 TargetPosition;
 };
 
+class Pacman : public Entity
+{
+    public:
+        void Die();
+};
+
 struct Waypoint
 {
 	ldk::Vec3 position;
@@ -105,7 +111,7 @@ struct GameState
 	ldk::Sprite dotSprite;
 
 	int playerPoints = 0;
-	Entity pacman = Entity();
+	Pacman pacman = Pacman();
 
     Ghost blinky = Ghost();
     Ghost pinky = Ghost();
@@ -131,6 +137,7 @@ Dot allDots[DOTS_LENGTH];
 typedef void (*GhostStrategy)(Ghost&, Waypoint&);
 
 #include "waypoint.cpp"
+#include "map.cpp"
 #include "dot.cpp"
 #include "ghosts.cpp"
 #include "input.cpp"
@@ -139,9 +146,17 @@ typedef void (*GhostStrategy)(Ghost&, Waypoint&);
 void ReadPlayerInput(const float, Entity&);
 void MovePacman(const float, Entity&);
 
+void SetEntitySpriteRec()
+{
+    gameState -> pacman.sprite.srcRect = { 473, 1, 13, 13 };
+    gameState -> blinky.sprite.srcRect = {521, 65, 13, 13};
+    gameState -> pinky.sprite.srcRect = {521, 81, 13, 13};
+    gameState -> inky.sprite.srcRect = {521, 97, 13, 13};
+    gameState -> clyde.sprite.srcRect = {521, 113, 13, 13};
+}
+
 void initializePacman()
 {
-	gameState -> pacman.sprite.srcRect = { 473, 1, 13, 13 };
 	gameState -> pacman.sprite.position = { 114, 0, PACMAN_LAYER };
 	gameState -> pacman.sprite.position.y = allWaypoints[WAYPOINTS_LENGTH-1].position.y;
 	gameState -> pacman.previousPosition = gameState -> pacman.sprite.position;
@@ -157,7 +172,6 @@ void initializeGhosts()
     //Blinky (red)
     int waypointIndex = (WAYPOINTS_LENGTH-1)/2;
     gameState -> blinky.Type = Blinky;
-    gameState -> blinky.sprite.srcRect = {521, 65, 13, 13};
     gameState -> blinky.sprite.position = 
         { allWaypoints[waypointIndex].position.x, allWaypoints[waypointIndex].position.y - 1, GHOSTS_LAYER };
     gameState -> blinky.previousPosition = allWaypoints[waypointIndex].position;
@@ -166,7 +180,6 @@ void initializeGhosts()
     //Pinky (pink)
     waypointIndex = 0;
     gameState -> pinky.Type = Pinky;
-    gameState -> pinky.sprite.srcRect = {521, 81, 13, 13};
     gameState -> pinky.sprite.position = 
         { allWaypoints[waypointIndex].position.x, allWaypoints[waypointIndex].position.y - 1, GHOSTS_LAYER };
     gameState -> pinky.previousPosition = allWaypoints[waypointIndex].position;
@@ -175,7 +188,6 @@ void initializeGhosts()
     //Inky (blue)
     waypointIndex = (WAYPOINTS_LENGTH - 1) / 2 + 6;
     gameState -> inky.Type = Inky;
-    gameState -> inky.sprite.srcRect = {521, 97, 13, 13};
     gameState -> inky.sprite.position = 
         { allWaypoints[waypointIndex].position.x, allWaypoints[waypointIndex].position.y + 1, GHOSTS_LAYER };
     gameState -> inky.previousPosition = allWaypoints[waypointIndex].position;
@@ -184,7 +196,6 @@ void initializeGhosts()
     //Clyde (orange)
     waypointIndex = 6;
     gameState -> clyde.Type = Clyde;
-    gameState -> clyde.sprite.srcRect = {521, 113, 13, 13};
     gameState -> clyde.sprite.position = 
         { allWaypoints[waypointIndex].position.x, allWaypoints[waypointIndex].position.y + 1, GHOSTS_LAYER };
     gameState -> clyde.previousPosition = allWaypoints[waypointIndex].position;
@@ -193,6 +204,8 @@ void initializeGhosts()
 
 void initializeSpritesheet()
 {
+    SetEntitySpriteRec();
+
     //Background
     gameState -> spritesheet = ldk::render::loadMaterial("./assets/spritesheet.cfg");
     gameState -> background.position = { SCREEN_WIDTH*0.5, SCREEN_HEIGHT*0.5, BACKGROUND_LAYER };
@@ -230,16 +243,12 @@ void gameInit(void* memory)
 
 void ResetGame()
 {
-	gameState -> pacman.sprite.angle = 0;
-	gameState -> pacman.sprite.position = { 114, 0, PACMAN_LAYER };
-	gameState -> pacman.sprite.position.y = allWaypoints[WAYPOINTS_LENGTH-1].position.y;
-	gameState -> pacman.previousPosition = gameState -> pacman.sprite.position;
-	gameState -> pacman.speed = 60;
-	gameState -> pacman.direction = { 0,0,0 };
-    
-	gameState -> pacman.desiredDir = {1,0,0};
-	gameState -> pacman.curWaypointIndex = WAYPOINTS_LENGTH - 1;
+    initializePacman();
+    gameState -> pacman.speed = 60;
 	gameState -> playerPoints = 0;
+
+    // Ghosts doesnt reset
+    initializeGhosts();
     
 	for (int i = 0; i < DOTS_LENGTH; i++)
 	{
@@ -279,9 +288,7 @@ void drawGhostTargetPosition(Ghost& ghost)
 
     dotSprite.color = getGhostColor(ghost);
     dotSprite.width = dotSprite.height = 8;
-    dotSprite.position.x = ghost.TargetPosition.x;
-    dotSprite.position.y = ghost.TargetPosition.y;
-    dotSprite.position.z = DEBUG_LAYER;
+    dotSprite.position = {ghost.TargetPosition.x, ghost.TargetPosition.y, DEBUG_LAYER};
     ldk::render::spriteBatchSubmit(dotSprite);
     
     dotSprite.color = defaultColor;
@@ -333,15 +340,12 @@ void draw()
 
     //draw characters
 	ldk::render::spriteBatchSubmit(gameState -> pacman.sprite);
-    ldk::render::spriteBatchSubmit(gameState -> blinky.sprite);
-    ldk::render::spriteBatchSubmit(gameState -> pinky.sprite);
-    ldk::render::spriteBatchSubmit(gameState -> inky.sprite);
-    ldk::render::spriteBatchSubmit(gameState -> clyde.sprite);
 
-    drawGhostTargetPosition(gameState->blinky);
-    drawGhostTargetPosition(gameState->pinky);
-    drawGhostTargetPosition(gameState->inky);
-    drawGhostTargetPosition(gameState->clyde);
+    for(auto ghost : gameState -> ghosts)
+    {
+        ldk::render::spriteBatchSubmit(ghost.sprite);
+        drawGhostTargetPosition(ghost);
+    }
 
 	ldk::render::spriteBatchEnd();
 };
@@ -453,11 +457,15 @@ Waypoint& getWaypointByIndex(const int index)
 
 ldk::Vec3 IntDirToVec3(int direction)
 {
-    if (direction == BINARY_LEFT)
-        return {-1, 0, 0};
-    if (direction == BINARY_RIGHT)
-        return {1, 0, 0};
-    if (direction == BINARY_UP)
-        return {0, 1, 0};
-    return {0, -1, 0};
+    switch(direction)
+    {
+        case BINARY_LEFT:
+            return {-1, 0, 0};
+        case BINARY_RIGHT:
+            return {1, 0, 0};
+        case BINARY_UP:
+            return {0, 1, 0};
+        case BINARY_DOWN:
+            return {0, -1, 0};
+    }
 };
